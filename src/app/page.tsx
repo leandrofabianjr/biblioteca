@@ -1,66 +1,114 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import LibraryList from "@/components/features/LibraryList";
+import { db } from "@/lib/db";
 
-export default function Home() {
+const ITEMS_PER_PAGE = 12; // Número de itens por página
+
+export default async function LibraryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const currentPage = Number(resolvedParams?.page) || 1;
+  const searchQuery = resolvedParams?.q || "";
+  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  // Constrói a cláusula de busca para o Prisma se houver termo de pesquisa
+  const whereClause = searchQuery
+    ? {
+        OR: [
+          {
+            description: {
+              contains: searchQuery,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            location: {
+              description: {
+                contains: searchQuery,
+                mode: "insensitive" as const,
+              },
+            },
+          },
+          {
+            item_authors: {
+              some: {
+                author: {
+                  name: { contains: searchQuery, mode: "insensitive" as const },
+                },
+              },
+            },
+          },
+          {
+            item_genres: {
+              some: {
+                genre: {
+                  description: {
+                    contains: searchQuery,
+                    mode: "insensitive" as const,
+                  },
+                },
+              },
+            },
+          },
+          {
+            item_publishers: {
+              some: {
+                publisher: {
+                  name: { contains: searchQuery, mode: "insensitive" as const },
+                },
+              },
+            },
+          },
+        ],
+      }
+    : {};
+
+  // Executa a busca e a contagem total em paralelo para melhor performance
+  const [items, totalItems] = await Promise.all([
+    db.item.findMany({
+      where: whereClause,
+      skip,
+      take: ITEMS_PER_PAGE,
+      include: {
+        location: { select: { description: true } },
+        item_authors: { include: { author: { select: { name: true } } } },
+        item_genres: {
+          include: { genre: { select: { uuid: true, description: true } } },
+        },
+        item_publishers: { include: { publisher: { select: { name: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.item.count({ where: whereClause }),
+  ]);
+
+  // Sanitização
+  const formattedItems = items.map((item) => ({
+    uuid: item.uuid,
+    description: item.description,
+    year: item.year,
+    location: item.location ? { description: item.location.description } : null,
+    item_authors: item.item_authors.map((ia) => ({
+      author: { name: ia.author.name },
+    })),
+    item_genres: item.item_genres.map((ig) => ({
+      genre: { uuid: ig.genre.uuid, description: ig.genre.description },
+    })),
+    item_publishers: item.item_publishers.map((ip) => ({
+      publisher: { name: ip.publisher.name },
+    })),
+  }));
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main>
+      <LibraryList
+        initialItems={formattedItems}
+        itemsCount={totalItems}
+        currentPage={currentPage}
+        pageSize={ITEMS_PER_PAGE}
+      />
+    </main>
   );
 }

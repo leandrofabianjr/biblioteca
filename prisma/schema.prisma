@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model author {
+  uuid         String         @id(map: "PK_c81b134c9ae0af445f2a0c05031") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt    DateTime       @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime       @default(now()) @db.Timestamp(6)
+  deletedAt    DateTime?      @db.Timestamp(6)
+  ownerUuid    String?        @db.Uuid
+  name         String         @db.VarChar
+  user         user?          @relation(fields: [ownerUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_87219d8d5b68ea2598e6a5fe066")
+  item_authors item_authors[]
+}
+
+model genre {
+  uuid        String        @id(map: "PK_3e554b051ddcb121a7e3d946e69") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt   DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime      @default(now()) @db.Timestamp(6)
+  deletedAt   DateTime?     @db.Timestamp(6)
+  ownerUuid   String?       @db.Uuid
+  description String        @db.VarChar
+  user        user?         @relation(fields: [ownerUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_fc3cb57ed2d551066f78e9f8c44")
+  item_genres item_genres[]
+}
+
+model item {
+  uuid            String            @id(map: "PK_eb3fcd003ddc6f23c342885677b") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime          @default(now()) @db.Timestamp(6)
+  deletedAt       DateTime?         @db.Timestamp(6)
+  ownerUuid       String?           @db.Uuid
+  description     String            @db.VarChar
+  year            Int
+  locationUuid    String?           @db.Uuid
+  user            user?             @relation(fields: [ownerUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_4d1a90eed01fc6f443198d30eac")
+  location        location?         @relation(fields: [locationUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_c6b197b3228f9beffb5a93e4503")
+  item_authors    item_authors[]
+  item_genres     item_genres[]
+  item_publishers item_publishers[]
+}
+
+model item_authors {
+  itemUuid   String @db.Uuid
+  authorUuid String @db.Uuid
+  item       item   @relation(fields: [itemUuid], references: [uuid], onDelete: Cascade, map: "FK_97837f5ba7d9fec1bb69a8dc9a7")
+  author     author @relation(fields: [authorUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_fadcfccc647b4e379ce60b4fb46")
+
+  @@id([itemUuid, authorUuid], map: "PK_37f4c94c8988b2ab1f60d288c26")
+  @@index([itemUuid], map: "IDX_97837f5ba7d9fec1bb69a8dc9a")
+  @@index([authorUuid], map: "IDX_fadcfccc647b4e379ce60b4fb4")
+}
+
+model item_genres {
+  itemUuid  String @db.Uuid
+  genreUuid String @db.Uuid
+  item      item   @relation(fields: [itemUuid], references: [uuid], onDelete: Cascade, map: "FK_4b8c3aa8f4f556f06e5dfec46f2")
+  genre     genre  @relation(fields: [genreUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_d06004fddad3130689943d8a9f3")
+
+  @@id([itemUuid, genreUuid], map: "PK_780a13922e913df4709bed934e1")
+  @@index([itemUuid], map: "IDX_4b8c3aa8f4f556f06e5dfec46f")
+  @@index([genreUuid], map: "IDX_d06004fddad3130689943d8a9f")
+}
+
+model item_publishers {
+  itemUuid      String    @db.Uuid
+  publisherUuid String    @db.Uuid
+  publisher     publisher @relation(fields: [publisherUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_46d25603d12cdaa5c1b79cdd4ef")
+  item          item      @relation(fields: [itemUuid], references: [uuid], onDelete: Cascade, map: "FK_a27d279f912ee2e8b22546eb98b")
+
+  @@id([itemUuid, publisherUuid], map: "PK_4e997476fddc4c49679df9c16a7")
+  @@index([publisherUuid], map: "IDX_46d25603d12cdaa5c1b79cdd4e")
+  @@index([itemUuid], map: "IDX_a27d279f912ee2e8b22546eb98")
+}
+
+model location {
+  uuid        String    @id(map: "PK_a72732583bace15bb0b0903bedf") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt   DateTime? @db.Timestamp(6)
+  ownerUuid   String?   @db.Uuid
+  description String    @db.VarChar
+  item        item[]
+  user        user?     @relation(fields: [ownerUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_6c70bf90a70a258abbf1e5da4d9")
+}
+
+model publisher {
+  uuid            String            @id(map: "PK_1c97f4f9de57ae1ee2957003c58") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime          @default(now()) @db.Timestamp(6)
+  deletedAt       DateTime?         @db.Timestamp(6)
+  ownerUuid       String?           @db.Uuid
+  name            String            @db.VarChar
+  item_publishers item_publishers[]
+  user            user?             @relation(fields: [ownerUuid], references: [uuid], onDelete: NoAction, onUpdate: NoAction, map: "FK_bb84c0b066b54842eab59c50ff1")
+}
+
+model user {
+  uuid                String      @id(map: "PK_a95e949168be7b7ece1a2382fed") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt           DateTime    @default(now()) @db.Timestamp(6)
+  updatedAt           DateTime    @default(now()) @db.Timestamp(6)
+  deletedAt           DateTime?   @db.Timestamp(6)
+  google_uid          String      @db.VarChar
+  email               String      @db.VarChar
+  name                String      @db.VarChar
+  profile_picture_url String?     @db.VarChar
+  author              author[]
+  genre               genre[]
+  item                item[]
+  location            location[]
+  publisher           publisher[]
+}
