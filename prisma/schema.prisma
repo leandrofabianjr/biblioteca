@@ -17,8 +17,8 @@ model User {
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
 
-  sessions AuthSession[]
-  accounts AuthAccount[]
+  sessions Session[]
+  accounts Account[]
 
   author    Author[]
   genre     Genre[]
@@ -29,7 +29,7 @@ model User {
   @@map("user")
 }
 
-model AuthSession {
+model Session {
   id        String   @id
   expiresAt DateTime
   token     String
@@ -45,7 +45,7 @@ model AuthSession {
   @@map("auth_session")
 }
 
-model AuthAccount {
+model Account {
   id                    String    @id
   accountId             String
   providerId            String
@@ -65,7 +65,7 @@ model AuthAccount {
   @@map("auth_account")
 }
 
-model AuthVerification {
+model Verification {
   id         String   @id
   identifier String
   value      String

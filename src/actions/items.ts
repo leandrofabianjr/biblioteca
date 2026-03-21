@@ -16,7 +16,7 @@ export async function getItems() {
       },
       item_genres: {
         include: {
-          genre: { select: { uuid: true, description: true } },
+          genre: { select: { id: true, description: true } },
         },
       },
       item_publishers: {
@@ -35,7 +35,7 @@ export async function getItems() {
 
 // Tipagem para os itens que vêm do formulário
 export type SelectOption = {
-  uuid?: string;
+  id?: string;
   name: string;
   isNew: boolean;
 };
@@ -60,7 +60,7 @@ export async function createLibraryItem(data: CreateItemPayload) {
         ...(data.location && {
           location: data.location.isNew
             ? { create: { description: data.location.name } }
-            : { connect: { uuid: data.location.uuid } },
+            : { connect: { id: data.location.id } },
         }),
 
         // 2. Autores (Relação N-para-N usando tabela intermediária)
@@ -68,7 +68,7 @@ export async function createLibraryItem(data: CreateItemPayload) {
           create: data.authors.map((author) =>
             author.isNew
               ? { author: { create: { name: author.name } } }
-              : { author: { connect: { uuid: author.uuid } } },
+              : { author: { connect: { id: author.id } } },
           ),
         },
 
@@ -77,7 +77,7 @@ export async function createLibraryItem(data: CreateItemPayload) {
           create: data.genres.map((genre) =>
             genre.isNew
               ? { genre: { create: { description: genre.name } } }
-              : { genre: { connect: { uuid: genre.uuid } } },
+              : { genre: { connect: { id: genre.id } } },
           ),
         },
 
@@ -86,7 +86,7 @@ export async function createLibraryItem(data: CreateItemPayload) {
           create: data.publishers.map((pub) =>
             pub.isNew
               ? { publisher: { create: { name: pub.name } } }
-              : { publisher: { connect: { uuid: pub.uuid } } },
+              : { publisher: { connect: { id: pub.id } } },
           ),
         },
       },

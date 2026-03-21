@@ -24,12 +24,12 @@ import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { LuSearch } from "react-icons/lu";
 
 export type LibraryItem = {
-  uuid: string;
+  id: string;
   description: string;
   year: number;
   location: { description: string } | null;
   item_authors: { author: { name: string } }[];
-  item_genres: { genre: { uuid: string; description: string } }[];
+  item_genres: { genre: { id: string; description: string } }[];
   item_publishers: { publisher: { name: string } }[];
 };
 
@@ -121,7 +121,7 @@ export default function LibraryList({
           {initialItems.length > 0 ? (
             initialItems.map((item) => (
               <CardRoot
-                key={item.uuid}
+                key={item.id}
                 variant="outline"
                 boxShadow="md"
                 _hover={{ boxShadow: "lg" }}
@@ -191,7 +191,7 @@ export default function LibraryList({
                     <Flex wrap="wrap" gap={2} mt={2}>
                       {item.item_genres.map((ig) => (
                         <Badge
-                          key={ig.genre.uuid}
+                          key={ig.genre.id}
                           colorScheme="blue"
                           variant="subtle"
                         >
@@ -238,7 +238,7 @@ function Paginator(props: {
         count={props.count}
         page={props.page}
         pageSize={props.pageSize}
-        onPageChange={({ page, pageSize }) => props.onPageChange(page)}
+        onPageChange={({ page }) => props.onPageChange(page)}
       >
         <ButtonGroup variant="ghost" size="sm">
           <Pagination.PrevTrigger asChild>

@@ -6,30 +6,30 @@ export default async function Page() {
   // Busca todos os dados em paralelo para alimentar as sugestões do formulário
   const [authors, genres, publishers, locations] = await Promise.all([
     db.author.findMany({
-      select: { uuid: true, name: true },
+      select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
     db.genre.findMany({
-      select: { uuid: true, description: true },
+      select: { id: true, description: true },
       orderBy: { description: "asc" },
     }),
     db.publisher.findMany({
-      select: { uuid: true, name: true },
+      select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
     db.location.findMany({
-      select: { uuid: true, description: true },
+      select: { id: true, description: true },
       orderBy: { description: "asc" },
     }),
   ]);
 
   // Normalizando o gênero e localização para terem o campo "name" que o componente espera
   const formattedGenres = genres.map((g) => ({
-    uuid: g.uuid,
+    id: g.id,
     name: g.description,
   }));
   const formattedLocations = locations.map((l) => ({
-    uuid: l.uuid,
+    id: l.id,
     name: l.description,
   }));
 

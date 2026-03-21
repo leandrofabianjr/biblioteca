@@ -25,7 +25,7 @@ import { useState, useTransition } from "react";
 interface CreatableTagInputProps {
   label: string;
   placeholder: string;
-  existingOptions: { uuid: string; name: string }[];
+  existingOptions: { id: string; name: string }[];
   selected: SelectOption[];
   onChange: (items: SelectOption[]) => void;
   singleMode?: boolean; // Usado para Localização (apenas 1 permitido)
@@ -50,11 +50,11 @@ function CreatableTagInput({
     )
     .slice(0, 5); // Mostra no máximo 5 sugestões
 
-  const handleAdd = (optionName: string, uuid?: string) => {
+  const handleAdd = (optionName: string, id?: string) => {
     if (!optionName.trim() || (singleMode && selected.length >= 1)) return;
 
-    const isNew = !uuid;
-    const newItem: SelectOption = { name: optionName.trim(), isNew, uuid };
+    const isNew = !id;
+    const newItem: SelectOption = { name: optionName.trim(), isNew, id };
     onChange([...selected, newItem]);
     setInputValue("");
   };
@@ -67,7 +67,7 @@ function CreatableTagInput({
         (s) => s.name.toLowerCase() === inputValue.trim().toLowerCase(),
       );
       if (exactMatch) {
-        handleAdd(exactMatch.name, exactMatch.uuid);
+        handleAdd(exactMatch.name, exactMatch.id);
       } else {
         handleAdd(inputValue); // Cria como novo
       }
@@ -125,11 +125,11 @@ function CreatableTagInput({
             >
               {suggestions.map((opt) => (
                 <ListItem
-                  key={opt.uuid}
+                  key={opt.id}
                   p={2}
                   cursor="pointer"
                   _hover={{ bg: "gray.100" }}
-                  onClick={() => handleAdd(opt.name, opt.uuid)}
+                  onClick={() => handleAdd(opt.name, opt.id)}
                 >
                   {opt.name}
                 </ListItem>
@@ -138,7 +138,7 @@ function CreatableTagInput({
           )}
           {inputValue && suggestions.length === 0 && (
             <Text fontSize="sm" color="green.500" mt={1}>
-              Pressione Enter para cadastrar "{inputValue}" como novo.
+              Pressione Enter para cadastrar {'"'+inputValue+'"'} como novo.
             </Text>
           )}
         </Box>
@@ -149,10 +149,10 @@ function CreatableTagInput({
 
 // --- COMPONENTE PRINCIPAL DO FORMULÁRIO ---
 interface FormProps {
-  dbAuthors: { uuid: string; name: string }[];
-  dbGenres: { uuid: string; name: string }[];
-  dbPublishers: { uuid: string; name: string }[];
-  dbLocations: { uuid: string; name: string }[];
+  dbAuthors: { id: string; name: string }[];
+  dbGenres: { id: string; name: string }[];
+  dbPublishers: { id: string; name: string }[];
+  dbLocations: { id: string; name: string }[];
 }
 
 export default function CreateItemForm({
