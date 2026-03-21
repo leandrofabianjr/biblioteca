@@ -1,6 +1,6 @@
+import { loggedUserAction } from '@/actions/_base';
+import { getItems } from '@/actions/items';
 import ItemsList from '@/components/features/ItemsList';
-import { loggedUser } from '@/lib/auth/auth-session';
-import { db } from '@/lib/db';
 import { ROUTES } from '@/lib/routes';
 import { Box, Button, Flex, Heading } from '@chakra-ui/react';
 import Link from 'next/link';
@@ -12,94 +12,33 @@ export default async function ItemsPage({
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  const user = await loggedUser();
-  const resolvedParams = await searchParams;
-  const currentPage = Number(resolvedParams?.page) || 1;
-  const searchQuery = resolvedParams?.q || '';
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+  const params = await searchParams;
+  const action = await loggedUserAction(async ({ user: { id: ownerId } }) =>
+    getItems({ ownerId, itemsPerPage: ITEMS_PER_PAGE, ...params }),
+  );
 
-  // Constrói a cláusula de busca para o Prisma se houver termo de pesquisa
-  const whereClause = {
-    ownerId: user.id,
-    ...(searchQuery
-      ? {
-          OR: [
-            {
-              description: {
-                contains: searchQuery,
-                mode: 'insensitive' as const,
-              },
-            },
-            {
-              location: {
-                description: {
-                  contains: searchQuery,
-                  mode: 'insensitive' as const,
-                },
-              },
-            },
-            {
-              item_authors: {
-                some: {
-                  author: {
-                    name: {
-                      contains: searchQuery,
-                      mode: 'insensitive' as const,
-                    },
-                  },
-                },
-              },
-            },
-            {
-              item_genres: {
-                some: {
-                  genre: {
-                    description: {
-                      contains: searchQuery,
-                      mode: 'insensitive' as const,
-                    },
-                  },
-                },
-              },
-            },
-            {
-              item_publishers: {
-                some: {
-                  publisher: {
-                    name: {
-                      contains: searchQuery,
-                      mode: 'insensitive' as const,
-                    },
-                  },
-                },
-              },
-            },
-          ],
-        }
-      : {}),
-  };
+  if (action.error) {
+    return (
+      <main>
+        <Box maxW="7xl" mx="auto" p={{ base: 4, md: 8 }}>
+          <Flex justifyContent="space-between" alignItems="center" mb={4}>
+            <Box flex="1" />
+            <Heading as="h1" mb={6} textAlign="center">
+              Biblioteca
+            </Heading>
+            <Flex flex="1" justifyContent="flex-end">
+              <Button asChild>
+                <Link href={ROUTES.loggedUser.items.create()}>Cadastrar</Link>
+              </Button>
+            </Flex>
+          </Flex>
+          <p>{JSON.stringify(action.error)}</p>
+        </Box>
+      </main>
+    );
+  }
 
-  // Executa a busca e a contagem total em paralelo para melhor performance
-  const [items, totalItems] = await Promise.all([
-    db.item.findMany({
-      where: {
-        ...whereClause,
-      },
-      skip,
-      take: ITEMS_PER_PAGE,
-      include: {
-        location: { select: { description: true } },
-        item_authors: { include: { author: { select: { name: true } } } },
-        item_genres: {
-          include: { genre: { select: { id: true, description: true } } },
-        },
-        item_publishers: { include: { publisher: { select: { name: true } } } },
-      },
-      orderBy: { createdAt: 'desc' },
-    }),
-    db.item.count({ where: whereClause }),
-  ]);
-
+  const { items, totalItems, currentPage } = action.data!;
   // Sanitização
   const formattedItems = items.map((item) => ({
     id: item.id,

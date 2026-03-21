@@ -5,6 +5,7 @@ import {
   Box,
   ButtonGroup,
   CardBody,
+  CardFooter,
   CardHeader,
   CardRoot,
   EmptyState,
@@ -25,6 +26,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { LuSearch, LuSearchX } from 'react-icons/lu';
+import { DeleteItemButton } from './DeleteItemButton';
 
 export type LibraryItem = {
   id: string;
@@ -176,6 +178,9 @@ export default function ItemsList({
                     </Flex>
                   </Stack>
                 </CardBody>
+                <CardFooter>
+                  <DeleteItemButton itemId={item.id} />
+                </CardFooter>
               </CardRoot>
             ))}
           </SimpleGrid>

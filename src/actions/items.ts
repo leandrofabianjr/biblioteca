@@ -2,36 +2,98 @@
 
 import { db } from "@/lib/db";
 import { User } from "better-auth";
+import { revalidatePath } from "next/cache";
 import { clientAction } from "./_base";
 
-export async function getItems() {
-  const items = await db.item.findMany({
-    include: {
-      location: {
-        select: { description: true },
-      },
-      item_authors: {
-        include: {
-          author: { select: { name: true } },
-        },
-      },
-      item_genres: {
-        include: {
-          genre: { select: { id: true, description: true } },
-        },
-      },
-      item_publishers: {
-        include: {
-          publisher: { select: { name: true } },
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+export async function getItems(searchParams: { ownerId: string; q?: string; page?: string, itemsPerPage: number }) {
+  const currentPage = Number(searchParams?.page) || 1;
+  const searchQuery = searchParams?.q || '';
+  const skip = (currentPage - 1) * searchParams.itemsPerPage;
 
-  return items;
+  // Constrói a cláusula de busca para o Prisma se houver termo de pesquisa
+  const whereClause = {
+    ownerId: searchParams.ownerId,
+    deletedAt: null,
+    ...(searchQuery
+      ? {
+        OR: [
+          {
+            description: {
+              contains: searchQuery,
+              mode: 'insensitive' as const,
+            },
+          },
+          {
+            location: {
+              description: {
+                contains: searchQuery,
+                mode: 'insensitive' as const,
+              },
+            },
+          },
+          {
+            item_authors: {
+              some: {
+                author: {
+                  name: {
+                    contains: searchQuery,
+                    mode: 'insensitive' as const,
+                  },
+                },
+              },
+            },
+          },
+          {
+            item_genres: {
+              some: {
+                genre: {
+                  description: {
+                    contains: searchQuery,
+                    mode: 'insensitive' as const,
+                  },
+                },
+              },
+            },
+          },
+          {
+            item_publishers: {
+              some: {
+                publisher: {
+                  name: {
+                    contains: searchQuery,
+                    mode: 'insensitive' as const,
+                  },
+                },
+              },
+            },
+          },
+        ],
+      }
+      : {}),
+  };
+
+  // Executa a busca e a contagem total em paralelo para melhor performance
+  const [items, totalItems] = await Promise.all([
+    db.item.findMany({
+      where: {
+        ...whereClause,
+      },
+      skip,
+      take: searchParams.itemsPerPage,
+      include: {
+        location: { select: { description: true } },
+        item_authors: { include: { author: { select: { name: true } } } },
+        item_genres: {
+          include: { genre: { select: { id: true, description: true } } },
+        },
+        item_publishers: { include: { publisher: { select: { name: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.item.count({ where: whereClause }),
+  ]);
+
+  return { currentPage, items, totalItems };
 }
 
 // Tipagem para os itens que vêm do formulário
@@ -94,5 +156,37 @@ export async function createLibraryItem({ id: ownerId }: User, data: CreateItemP
         ),
       },
     },
+  });
+}
+
+// Recebe o ID do item que será excluído
+export async function deleteItemForLoggedUser(itemId: string) {
+  return await clientAction(async ({ user }) => {
+    try {
+      // Segurança: Verifica se o item existe e pertence a este usuário
+      const item = await db.item.findUnique({
+        where: { id: itemId, ownerId: user.id },
+      });
+
+      if (!item) {
+        throw new Error("Item não encontrado ou você não tem permissão.");
+      }
+
+      // Soft Delete: Atualiza o campo deletedAt com a data atual
+      await db.item.update({
+        where: { id: itemId },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
+
+      // Atualiza a listagem na tela
+      revalidatePath("/");
+
+      return { success: true };
+    } catch (error) {
+      console.error("Erro ao excluir item:", error);
+      return { success: false, error: "Falha ao excluir o item." };
+    }
   });
 }
