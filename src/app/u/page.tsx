@@ -1,7 +1,7 @@
 import LibraryList from '@/components/features/LibraryList';
 import { loggedUser } from '@/lib/auth/auth-session';
 import { db } from '@/lib/db';
-import { Flex, Heading } from '@chakra-ui/react';
+import { Box, Heading } from '@chakra-ui/react';
 
 const ITEMS_PER_PAGE = 12; // Número de itens por página
 
@@ -117,12 +117,17 @@ export default async function LibraryPage({
 
   return (
     <main>
-      <LibraryList
-        initialItems={formattedItems}
-        itemsCount={totalItems}
-        currentPage={currentPage}
-        pageSize={ITEMS_PER_PAGE}
-      />
+      <Box maxW="7xl" mx="auto" p={{ base: 4, md: 8 }}>
+        <Heading as="h1" mb={6} textAlign="center">
+          Biblioteca
+        </Heading>
+        <LibraryList
+          initialItems={formattedItems}
+          itemsCount={totalItems}
+          currentPage={currentPage}
+          pageSize={ITEMS_PER_PAGE}
+        />
+      </Box>
     </main>
   );
 }

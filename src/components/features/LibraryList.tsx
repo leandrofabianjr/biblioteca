@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Badge,
@@ -7,21 +7,24 @@ import {
   CardBody,
   CardHeader,
   CardRoot,
+  EmptyState,
   Flex,
   Heading,
   HStack,
-  Icon,
   IconButton,
   Input,
+  InputGroup,
   Pagination,
   SimpleGrid,
+  Spinner,
   Stack,
   Text,
-} from "@chakra-ui/react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
-import { LuSearch } from "react-icons/lu";
+  VStack,
+} from '@chakra-ui/react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useTransition } from 'react';
+import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { LuSearch, LuSearchX } from 'react-icons/lu';
 
 export type LibraryItem = {
   id: string;
@@ -50,81 +53,53 @@ export default function LibraryList({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  // Estado local para o input para evitar delays de digitação
-  const [inputValue, setInputValue] = useState(searchParams.get("q") || "");
 
-  // Atualiza o URL (debounce simples de 500ms para não fazer query a cada letra)
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      // Pega o termo de busca atual da URL
-      const currentQuery = searchParams.get("q") || "";
-
-      // A MÁGICA ESTÁ AQUI: Só continua se o input for diferente da URL atual.
-      // Isso quebra o loop infinito!
-      if (inputValue === currentQuery) {
-        return;
-      }
-
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("page", "1"); // Volta para a página 1 ao fazer nova pesquisa
-
-      if (inputValue) {
-        params.set("q", inputValue);
-      } else {
-        params.delete("q");
-      }
-
-      startTransition(() => {
-        router.replace(`${pathname}?${params.toString()}`);
-      });
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [inputValue, pathname, router, searchParams]);
-
-  // Função para mudar de página
-  const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", newPage.toString());
-
+  const updateRouteParams = (params: URLSearchParams) => {
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
   };
 
-  return (
-    <Box maxW="7xl" mx="auto" p={{ base: 4, md: 8 }}>
-      <Heading as="h1" mb={6} textAlign="center">
-        Biblioteca
-      </Heading>
+  const handleSearchTermChange = (newTerm: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('page'); // Limpa o parâmetro de página ao fazer nova pesquisa
 
-      {/* Input de Pesquisa */}
+    if (newTerm) {
+      params.set('q', newTerm);
+    } else {
+      params.delete('q');
+    }
+
+    updateRouteParams(params);
+  };
+
+  // Função para mudar de página
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+
+    updateRouteParams(params);
+  };
+
+  return (
+    <>
       <Box mb={8} maxW="md" mx="auto">
-        <Flex position="relative" align="center">
-          <Input
-            placeholder="Filtrar por título, autor, género..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            bg="white"
-            boxShadow="sm"
-            pl={10}
-            borderRadius="md"
-          />
-          <Icon as={LuSearch} position="absolute" left={3} color="gray.400" />
-        </Flex>
+        <SearchBar
+          isLoading={isPending}
+          initialInputValue={searchParams.get('q')}
+          onTermChange={handleSearchTermChange}
+        />
       </Box>
 
-      {/* Listagem Responsiva */}
-      {/* Listagem */}
       <Box opacity={isPending ? 0.6 : 1} transition="opacity 0.2s">
-        <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 4 }} gap={6}>
-          {initialItems.length > 0 ? (
-            initialItems.map((item) => (
+        {initialItems.length > 0 ? (
+          <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 4 }} gap={6}>
+            {initialItems.map((item) => (
               <CardRoot
                 key={item.id}
                 variant="outline"
                 boxShadow="md"
-                _hover={{ boxShadow: "lg" }}
+                _hover={{ boxShadow: 'lg' }}
                 transition="all 0.2s"
               >
                 <CardHeader pb={2}>
@@ -151,7 +126,7 @@ export default function LibraryList({
                       <Text fontSize="sm">
                         {item.item_authors
                           .map((ia) => ia.author.name)
-                          .join(", ") || "N/A"}
+                          .join(', ') || 'N/A'}
                       </Text>
                     </Box>
 
@@ -168,7 +143,7 @@ export default function LibraryList({
                       <Text fontSize="sm">
                         {item.item_publishers
                           .map((ip) => ip.publisher.name)
-                          .join(", ") || "N/A"}
+                          .join(', ') || 'N/A'}
                       </Text>
                     </Box>
 
@@ -183,7 +158,7 @@ export default function LibraryList({
                         Localização
                       </Text>
                       <Text fontSize="sm">
-                        {item.location?.description || "Não informada"}
+                        {item.location?.description || 'Não informada'}
                       </Text>
                     </Box>
 
@@ -202,20 +177,24 @@ export default function LibraryList({
                   </Stack>
                 </CardBody>
               </CardRoot>
-            ))
-          ) : (
-            <Box
-              columns={{ base: 1, sm: 2, lg: 3, xl: 4 }}
-              textAlign="center"
-              py={10}
-            >
-              <Text color="gray.500">Nenhum item encontrado.</Text>
-            </Box>
-          )}
-        </SimpleGrid>
+            ))}
+          </SimpleGrid>
+        ) : (
+          <EmptyState.Root>
+            <EmptyState.Content>
+              <EmptyState.Indicator>
+                <LuSearchX size={48} />
+              </EmptyState.Indicator>
+              <VStack textAlign="center">
+                <EmptyState.Title>Nada encontrado</EmptyState.Title>
+                <EmptyState.Description>
+                  Tente pesquisar por termos diferentes
+                </EmptyState.Description>
+              </VStack>
+            </EmptyState.Content>
+          </EmptyState.Root>
+        )}
       </Box>
-
-      {/* Controlos de Paginação */}
 
       <Paginator
         count={itemsCount}
@@ -223,15 +202,52 @@ export default function LibraryList({
         pageSize={pageSize}
         onPageChange={handlePageChange}
       />
-    </Box>
+    </>
   );
 }
+function SearchBar(props: {
+  isLoading: boolean;
+  initialInputValue: string | null;
+  onTermChange: (term: string) => void;
+}) {
+  const initialValue = props.initialInputValue || '';
+  const [inputValue, setInputValue] = useState(initialValue);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (inputValue == initialValue) return;
+      console.log(inputValue, initialValue);
+      props.onTermChange(inputValue);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [inputValue, props, initialValue]);
+
+  return (
+    <InputGroup
+      flex="1"
+      startElement={<LuSearch />}
+      endElement={props.isLoading ? <Spinner /> : null}
+    >
+      <Input
+        placeholder="Filtrar por título, autor, género..."
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        boxShadow="sm"
+        pl={10}
+        borderRadius="md"
+      />
+    </InputGroup>
+  );
+}
+
 function Paginator(props: {
   count: number;
   page: number;
   pageSize: number;
   onPageChange: (newPage: number) => void;
 }) {
+  if (props.count <= props.pageSize) return null;
   return (
     <HStack justifyContent="center" mt={8}>
       <Pagination.Root
@@ -249,7 +265,7 @@ function Paginator(props: {
 
           <Pagination.Items
             render={(page) => (
-              <IconButton variant={{ base: "ghost", _selected: "outline" }}>
+              <IconButton variant={{ base: 'ghost', _selected: 'outline' }}>
                 {page.value}
               </IconButton>
             )}
