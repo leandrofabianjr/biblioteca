@@ -1,36 +1,69 @@
 'use client';
 
-import { createItemForLoggedUser, SelectOption } from '@/actions/items';
+import {
+  createItemClientAction,
+  SelectOption,
+  updateItemClientAction,
+} from '@/actions/items';
 import { toaster } from '@/components/ui/toaster';
+import { ROUTES } from '@/lib/routes';
 import { Button, Field, Input, VStack } from '@chakra-ui/react';
+import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { TagsComboboxInput } from '../ui/TagsComboboxInput';
 
-// --- COMPONENTE PRINCIPAL DO FORMULÁRIO ---
-interface FormProps {
+// Define o formato dos dados que vêm do banco para popular a edição
+export interface ItemInitialData {
+  id: string;
+  description: string;
+  year: number;
+  authors: SelectOption[];
+  genres: SelectOption[];
+  publishers: SelectOption[];
+  location: SelectOption[]; // Pode vir vazio ou com 1 item
+}
+
+interface ItemFormProps {
   dbAuthors: { id: string; name: string }[];
   dbGenres: { id: string; name: string }[];
   dbPublishers: { id: string; name: string }[];
   dbLocations: { id: string; name: string }[];
+  // Se initialData for passado, o formulário entra no modo "Edição"
+  initialData?: ItemInitialData;
 }
 
-export default function CreateItemForm({
+export default function ItemForm({
   dbAuthors,
   dbGenres,
   dbPublishers,
   dbLocations,
-}: FormProps) {
+  initialData,
+}: ItemFormProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Estados dos campos nativos
-  const [description, setDescription] = useState('');
-  const [year, setYear] = useState('');
+  // O modo de edição é ativado se initialData.id existir
+  const isEditing = !!initialData?.id;
 
-  // Estados dos campos relacionais
-  const [authors, setAuthors] = useState<SelectOption[]>([]);
-  const [genres, setGenres] = useState<SelectOption[]>([]);
-  const [publishers, setPublishers] = useState<SelectOption[]>([]);
-  const [location, setLocation] = useState<SelectOption[]>([]);
+  // Estados dos campos nativos (inicializa com os dados ou vazio)
+  const [description, setDescription] = useState(
+    initialData?.description || '',
+  );
+  const [year, setYear] = useState(initialData?.year?.toString() || '');
+
+  // Estados dos campos relacionais (inicializa com os dados ou vazio)
+  const [authors, setAuthors] = useState<SelectOption[]>(
+    initialData?.authors || [],
+  );
+  const [genres, setGenres] = useState<SelectOption[]>(
+    initialData?.genres || [],
+  );
+  const [publishers, setPublishers] = useState<SelectOption[]>(
+    initialData?.publishers || [],
+  );
+  const [location, setLocation] = useState<SelectOption[]>(
+    initialData?.location || [],
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,26 +76,38 @@ export default function CreateItemForm({
       const payload = {
         description,
         year: parseInt(year),
-        location: location[0],
+        location: location[0] || null, // Garante que mande null se esvaziar a localização
         authors,
         genres,
         publishers,
       };
 
-      const result = await createItemForLoggedUser(payload);
+      let result;
+
+      if (isEditing) {
+        result = await updateItemClientAction(initialData.id, payload);
+      } else {
+        result = await createItemClientAction(payload);
+      }
 
       if (result.success) {
         toaster.create({
-          title: 'Livro cadastrado com sucesso!',
+          title: isEditing
+            ? 'Livro atualizado com sucesso!'
+            : 'Livro cadastrado com sucesso!',
           type: 'success',
         });
-        // Limpar formulário
-        setDescription('');
-        setYear('');
-        setAuthors([]);
-        setGenres([]);
-        setPublishers([]);
-        setLocation([]);
+
+        if (!isEditing) {
+          setDescription('');
+          setYear('');
+          setAuthors([]);
+          setGenres([]);
+          setPublishers([]);
+          setLocation([]);
+        }
+
+        router.push(ROUTES.loggedUser.items.root());
       } else {
         toaster.create({ title: JSON.stringify(result.error), type: 'error' });
       }
@@ -133,7 +178,7 @@ export default function CreateItemForm({
           loading={isPending}
           loadingText="Salvando..."
         >
-          Salvar no Acervo
+          {isEditing ? 'Salvar Alterações' : 'Salvar no Acervo'}
         </Button>
       </VStack>
     </form>

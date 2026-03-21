@@ -119,9 +119,8 @@ export function TagsComboboxInput({
                   key={index}
                   index={index}
                   value={tagName}
-                  // Simula o colorScheme="green" ou "blue" do código antigo
-                  bg={isNew ? 'green.100' : 'blue.100'}
-                  color={isNew ? 'green.800' : 'blue.800'}
+                  bg={isNew ? 'bg.warning' : undefined}
+                  color={isNew ? 'fg.warning' : undefined}
                   borderRadius="full"
                 >
                   <TagsInput.ItemPreview>

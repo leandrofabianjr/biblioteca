@@ -1,10 +1,10 @@
-import CreateItemForm from '@/components/features/CreateItemForm';
+import ItemForm from '@/components/features/ItemForm';
 import { loggedUser } from '@/lib/auth/auth-session';
 import { db } from '@/lib/db';
 import { Box, Heading } from '@chakra-ui/react';
 
 export default async function Page() {
-  const {id: ownerId} = await loggedUser();
+  const { id: ownerId } = await loggedUser();
   // Busca todos os dados em paralelo para alimentar as sugestões do formulário
   const [authors, genres, publishers, locations] = await Promise.all([
     db.author.findMany({
@@ -45,7 +45,7 @@ export default async function Page() {
         <Heading size="lg" mb={6}>
           Cadastrar Novo Item
         </Heading>
-        <CreateItemForm
+        <ItemForm
           dbAuthors={authors}
           dbGenres={formattedGenres}
           dbPublishers={publishers}

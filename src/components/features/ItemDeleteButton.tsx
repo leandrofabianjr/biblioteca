@@ -7,11 +7,11 @@ import { LuTrash2 } from 'react-icons/lu';
 import { toaster } from '../ui/toaster';
 import { Tooltip } from '../ui/tooltip';
 
-interface DeleteItemButtonProps {
+interface ItemDeleteButtonProps {
   itemId: string;
 }
 
-export function DeleteItemButton({ itemId }: DeleteItemButtonProps) {
+export function ItemDeleteButton({ itemId }: ItemDeleteButtonProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {

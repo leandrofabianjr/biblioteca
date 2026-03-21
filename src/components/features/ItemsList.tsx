@@ -1,5 +1,6 @@
 'use client';
 
+import { ROUTES } from '@/lib/routes';
 import {
   Badge,
   Box,
@@ -22,11 +23,12 @@ import {
   Text,
   VStack,
 } from '@chakra-ui/react';
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
-import { LuSearch, LuSearchX } from 'react-icons/lu';
-import { DeleteItemButton } from './DeleteItemButton';
+import { LuPencil, LuSearch, LuSearchX } from 'react-icons/lu';
+import { ItemDeleteButton } from './ItemDeleteButton';
 
 export type LibraryItem = {
   id: string;
@@ -179,7 +181,12 @@ export default function ItemsList({
                   </Stack>
                 </CardBody>
                 <CardFooter>
-                  <DeleteItemButton itemId={item.id} />
+                  <IconButton size="sm" asChild>
+                    <Link href={ROUTES.loggedUser.items.edit({ id: item.id })}>
+                      <LuPencil />
+                    </Link>
+                  </IconButton>
+                  <ItemDeleteButton itemId={item.id} />
                 </CardFooter>
               </CardRoot>
             ))}

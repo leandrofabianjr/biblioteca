@@ -11,7 +11,8 @@ export const ROUTES = {
     dashboard: () => '/u' as Route,
     items: {
       root: () => '/u/itens' as Route,
-      create: () => '/u/itens/cadastrar' as Route
+      create: () => '/u/itens/cadastrar' as Route,
+      edit: ({ id }: { id: string }) => `/u/itens/${id}/editar` as Route
     }
   },
 } as const;
