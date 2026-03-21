@@ -43,7 +43,7 @@ interface LibraryProps {
   currentPage: number;
 }
 
-export default function LibraryList({
+export default function ItemsList({
   initialItems,
   itemsCount,
   pageSize,
@@ -230,7 +230,7 @@ function SearchBar(props: {
       endElement={props.isLoading ? <Spinner /> : null}
     >
       <Input
-        placeholder="Filtrar por título, autor, género..."
+        placeholder="Filtrar por título, autor, gênero, editora ou localização"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         boxShadow="sm"

@@ -9,5 +9,9 @@ export const ROUTES = {
   loggedUser: {
     root: () => '/u' as Route,
     dashboard: () => '/u' as Route,
+    items: {
+      root: () => '/u/itens' as Route,
+      create: () => '/u/itens/cadastrar' as Route
+    }
   },
 } as const;

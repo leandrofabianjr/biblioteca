@@ -82,9 +82,9 @@ model Author {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
-  ownerId      String?
+  ownerId      String
   name         String
-  user         User?         @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  owner         User         @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   item_authors ItemAuthors[]
 
   @@map("author")
@@ -95,9 +95,9 @@ model Genre {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
-  ownerId     String?
+  ownerId     String
   description String
-  user        User?        @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  owner        User        @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   item_genres ItemGenres[]
 
   @@map("genre")
@@ -108,11 +108,11 @@ model Item {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   deletedAt       DateTime?
-  ownerId         String?
+  ownerId         String
   description     String
   year            Int
   locationUuid    String?
-  user            User?            @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  owner            User            @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   location        Location?        @relation(fields: [locationUuid], references: [id], onDelete: NoAction, onUpdate: NoAction)
   item_authors    ItemAuthors[]
   item_genres     ItemGenres[]
@@ -162,10 +162,10 @@ model Location {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  ownerId     String?
+  ownerId     String
   description String
   item        Item[]
-  user        User?     @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  owner        User?     @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("location")
 }
@@ -175,10 +175,10 @@ model Publisher {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   deletedAt       DateTime?
-  ownerId         String?
+  ownerId         String
   name            String
   item_publishers ItemPublishers[]
-  user            User?            @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  owner            User?            @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("publisher")
 }

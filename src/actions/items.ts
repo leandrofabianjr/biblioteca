@@ -1,7 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { revalidatePath } from "next/cache";
+import { User } from "better-auth";
+import { clientAction } from "./_base";
 
 export async function getItems() {
   const items = await db.item.findMany({
@@ -34,11 +35,10 @@ export async function getItems() {
 }
 
 // Tipagem para os itens que vêm do formulário
-export type SelectOption = {
-  id?: string;
-  name: string;
-  isNew: boolean;
-};
+
+export type SelectOption =
+  | { isNew: true; name: string; id?: string } // Se é novo, ID é opcional
+  | { isNew: false; name: string; id: string }; // Se não é novo, ID é OBRIGATÓRIO
 
 export interface CreateItemPayload {
   description: string;
@@ -49,54 +49,50 @@ export interface CreateItemPayload {
   publishers: SelectOption[];
 }
 
-export async function createLibraryItem(data: CreateItemPayload) {
-  try {
-    await db.item.create({
-      data: {
-        description: data.description,
-        year: data.year,
+export async function createItemForLoggedUser(data: CreateItemPayload) {
+  return await clientAction(async ({ user }) => createLibraryItem(user, data));
+}
 
-        // 1. Localização (Relação 1-para-N direta na tabela item)
-        ...(data.location && {
-          location: data.location.isNew
-            ? { create: { description: data.location.name } }
-            : { connect: { id: data.location.id } },
-        }),
+export async function createLibraryItem({ id: ownerId }: User, data: CreateItemPayload) {
 
-        // 2. Autores (Relação N-para-N usando tabela intermediária)
-        item_authors: {
-          create: data.authors.map((author) =>
-            author.isNew
-              ? { author: { create: { name: author.name } } }
-              : { author: { connect: { id: author.id } } },
-          ),
-        },
+  await db.item.create({
+    data: {
+      description: data.description,
+      year: data.year,
 
-        // 3. Gêneros (Atenção: o campo no schema é 'description', não 'name')
-        item_genres: {
-          create: data.genres.map((genre) =>
-            genre.isNew
-              ? { genre: { create: { description: genre.name } } }
-              : { genre: { connect: { id: genre.id } } },
-          ),
-        },
+      owner: { connect: { id: ownerId } },
 
-        // 4. Editoras
-        item_publishers: {
-          create: data.publishers.map((pub) =>
-            pub.isNew
-              ? { publisher: { create: { name: pub.name } } }
-              : { publisher: { connect: { id: pub.id } } },
-          ),
-        },
+      // 1. Localização (Relação 1-para-N direta na tabela item)
+      location: !data.location ? undefined : data.location.isNew
+        ? { create: { ownerId, description: data.location.name } }
+        : { connect: { id: data.location.id } },
+
+      // 2. Autores (Relação N-para-N usando tabela intermediária)
+      item_authors: {
+        create: data.authors.map((author) =>
+          author.isNew
+            ? { author: { create: { ownerId, name: author.name } } }
+            : { author: { connect: { id: author.id } } },
+        ),
       },
-    });
 
-    // Atualiza a listagem da biblioteca
-    revalidatePath("/");
-    return { success: true };
-  } catch (error) {
-    console.error("Erro ao criar item:", error);
-    return { success: false, error: "Falha ao cadastrar o item." };
-  }
+      // 3. Gêneros (Atenção: o campo no schema é 'description', não 'name')
+      item_genres: {
+        create: data.genres.map((genre) =>
+          genre.isNew
+            ? { genre: { create: { ownerId, description: genre.name } } }
+            : { genre: { connect: { id: genre.id } } },
+        ),
+      },
+
+      // 4. Editoras
+      item_publishers: {
+        create: data.publishers.map((pub) =>
+          pub.isNew
+            ? { publisher: { create: { ownerId, name: pub.name } } }
+            : { publisher: { connect: { id: pub.id } } },
+        ),
+      },
+    },
+  });
 }
