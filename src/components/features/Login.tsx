@@ -25,7 +25,7 @@ export default function Login() {
           <Image
             w="10"
             h="10"
-            src="/favicon.ico"
+            src="/icon.png"
             alt="Logo"
             borderRadius="md"
           />
