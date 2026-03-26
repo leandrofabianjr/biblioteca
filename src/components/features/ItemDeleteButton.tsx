@@ -49,6 +49,7 @@ export function ItemDeleteButton({ itemId }: ItemDeleteButtonProps) {
         onClick={handleDelete}
         loading={isPending}
         loadingText="Excluindo..."
+        aria-label="Excluir"
       >
         <LuTrash2 />
       </IconButton>

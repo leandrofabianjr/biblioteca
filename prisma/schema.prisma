@@ -112,6 +112,8 @@ model Item {
   description     String
   year            Int
   locationUuid    String?
+  coverImage      String?
+  isbn            String?
   owner            User            @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   location        Location?        @relation(fields: [locationUuid], references: [id], onDelete: NoAction, onUpdate: NoAction)
   item_authors    ItemAuthors[]

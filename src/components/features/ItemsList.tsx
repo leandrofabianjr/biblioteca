@@ -1,17 +1,9 @@
 'use client';
 
-import { ROUTES } from '@/lib/routes';
 import {
-  Badge,
   Box,
   ButtonGroup,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  CardRoot,
   EmptyState,
-  Flex,
-  Heading,
   HStack,
   IconButton,
   Input,
@@ -19,21 +11,20 @@ import {
   Pagination,
   SimpleGrid,
   Spinner,
-  Stack,
-  Text,
   VStack,
 } from '@chakra-ui/react';
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
-import { LuPencil, LuSearch, LuSearchX } from 'react-icons/lu';
-import { ItemDeleteButton } from './ItemDeleteButton';
+import { LuSearch, LuSearchX } from 'react-icons/lu';
+import { ItemCard } from './ItemCard';
 
 export type LibraryItem = {
   id: string;
   description: string;
   year: number;
+  isbn: string | null;
+  coverImage: string | null;
   location: { description: string } | null;
   item_authors: { author: { name: string } }[];
   item_genres: { genre: { id: string; description: string } }[];
@@ -97,98 +88,9 @@ export default function ItemsList({
 
       <Box opacity={isPending ? 0.6 : 1} transition="opacity 0.2s">
         {initialItems.length > 0 ? (
-          <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 4 }} gap={6}>
+          <SimpleGrid columns={{ base: 1, md: 2, xl: 3, '2xl': 4 }} gap={6}>
             {initialItems.map((item) => (
-              <CardRoot
-                key={item.id}
-                variant="outline"
-                boxShadow="md"
-                _hover={{ boxShadow: 'lg' }}
-                transition="all 0.2s"
-              >
-                <CardHeader pb={2}>
-                  <Heading size="md" mb={2} title={item.description}>
-                    {item.description}
-                  </Heading>
-                  <Text fontSize="sm" color="gray.500" mt={1}>
-                    {item.year}
-                  </Text>
-                </CardHeader>
-
-                <CardBody pt={2}>
-                  <Stack gap={3}>
-                    {/* Autores */}
-                    <Box>
-                      <Text
-                        fontSize="xs"
-                        fontWeight="bold"
-                        textTransform="uppercase"
-                        color="gray.500"
-                      >
-                        Autor(es)
-                      </Text>
-                      <Text fontSize="sm">
-                        {item.item_authors
-                          .map((ia) => ia.author.name)
-                          .join(', ') || 'N/A'}
-                      </Text>
-                    </Box>
-
-                    {/* Editoras */}
-                    <Box>
-                      <Text
-                        fontSize="xs"
-                        fontWeight="bold"
-                        textTransform="uppercase"
-                        color="gray.500"
-                      >
-                        Editora(s)
-                      </Text>
-                      <Text fontSize="sm">
-                        {item.item_publishers
-                          .map((ip) => ip.publisher.name)
-                          .join(', ') || 'N/A'}
-                      </Text>
-                    </Box>
-
-                    {/* Localização */}
-                    <Box>
-                      <Text
-                        fontSize="xs"
-                        fontWeight="bold"
-                        textTransform="uppercase"
-                        color="gray.500"
-                      >
-                        Localização
-                      </Text>
-                      <Text fontSize="sm">
-                        {item.location?.description || 'Não informada'}
-                      </Text>
-                    </Box>
-
-                    {/* Gêneros (Badges) */}
-                    <Flex wrap="wrap" gap={2} mt={2}>
-                      {item.item_genres.map((ig) => (
-                        <Badge
-                          key={ig.genre.id}
-                          colorScheme="blue"
-                          variant="subtle"
-                        >
-                          {ig.genre.description}
-                        </Badge>
-                      ))}
-                    </Flex>
-                  </Stack>
-                </CardBody>
-                <CardFooter>
-                  <IconButton size="sm" asChild>
-                    <Link href={ROUTES.loggedUser.items.edit({ id: item.id })}>
-                      <LuPencil />
-                    </Link>
-                  </IconButton>
-                  <ItemDeleteButton itemId={item.id} />
-                </CardFooter>
-              </CardRoot>
+              <ItemCard key={item.id} item={item} />
             ))}
           </SimpleGrid>
         ) : (
@@ -217,6 +119,7 @@ export default function ItemsList({
     </>
   );
 }
+
 function SearchBar(props: {
   isLoading: boolean;
   initialInputValue: string | null;
